@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit des Fondamentaux — Flotte OpenClaw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0a0e1a;
+    --bg-1: #0f1424;
+    --bg-2: #151b30;
+    --bg-3: #1a2138;
+    --surface: rgba(255,255,255,0.03);
+    --surface-hover: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --accent: #4f8cff;
+    --accent-glow: rgba(79,140,255,0.15);
+    --accent-2: #7c5cff;
+    --accent-3: #00d4ff;
+    --success: #34d399;
+    --success-bg: rgba(52,211,153,0.1);
+    --warning: #fbbf24;
+    --warning-bg: rgba(251,191,36,0.1);
+    --pending: #60a5fa;
+    --pending-bg: rgba(96,165,250,0.1);
+    --text-0: #f0f4ff;
+    --text-1: #c4ccdc;
+    --text-2: #8a93a8;
+    --text-3: #5a6378;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-glow: 0 0 40px rgba(79,140,255,0.08);
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-0);
+    color: var(--text-1);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === Background atmosphere === */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(79,140,255,0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(124,92,255,0.06), transparent),
+      radial-gradient(ellipse 50% 50% at 50% 100%, rgba(0,212,255,0.04), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* === Header === */
+  header {
+    padding: 64px 0 40px;
+    text-align: center;
+  }
+
+  .badge-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(79,140,255,0.25);
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-top::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  header h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    color: var(--text-0);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  header h1 .gradient {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header .subtitle {
+    font-size: 17px;
+    color: var(--text-2);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .header-meta {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--text-2);
+    font-family: var(--mono);
+  }
+
+  .meta-pill svg { width: 14px; height: 14px; opacity: 0.7; }
+
+  /* === Section titles === */
+  .section { padding: 48px 0; }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .section-title .num {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 4px 10px;
+    border-radius: var(--radius-xs);
+    border: 1px solid rgba(79,140,255,0.2);
+  }
+
+  .section-title h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-0);
+    letter-spacing: -0.02em;
+  }
+
+  .section-title .line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* === Stats row === */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+
+  .stat-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    text-align: center;
+    transition: border-color 0.3s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .stat-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+
+  .stat-card:hover::before { opacity: 1; }
+
+  .stat-value {
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--text-0);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.success { color: var(--success); }
+  .stat-value.warning { color: var(--warning); }
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-2);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* === Agent cards === */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 20px;
+  }
+
+  .agent-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .agent-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .agent-card.pass { border-left: 3px solid var(--success); }
+  .agent-card.pending { border-left: 3px solid var(--pending); }
+
+  .agent-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .agent-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-0);
+    margin-bottom: 4px;
+  }
+
+  .agent-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .verdict-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .verdict-pass {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid rgba(52,211,153,0.25);
+  }
+
+  .verdict-pending {
+    background: var(--pending-bg);
+    color: var(--pending);
+    border: 1px solid rgba(96,165,250,0.25);
+  }
+
+  .verdict-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  .verdict-pass .dot { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .verdict-pending .dot { background: var(--pending); animation: pulse 1.5s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .agent-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text-1);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .check-item:last-child { border-bottom: none; }
+
+  .check-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .check-icon.ok {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .check-icon.pending {
+    background: var(--pending-bg);
+    color: var(--pending);
+  }
+
+  .check-label {
+    font-size: 12px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    min-width: 90px;
+    font-weight: 500;
+  }
+
+  .check-detail {
+    font-size: 13px;
+    color: var(--text-1);
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .check-detail.mono { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+
+  /* === Score ring === */
+  .score-ring {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .score-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .score-ring circle {
+    fill: none;
+    stroke-width: 3;
+  }
+
+  .score-ring .bg-ring { stroke: rgba(255,255,255,0.06); }
+
+  .score-ring .progress-ring {
+    stroke: var(--success);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+
+  .score-ring.pending .progress-ring { stroke: var(--pending); }
+
+  .score-ring .score-text {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-0);
+  }
+
+  /* === Tableau === */
+  .table-wrap {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  thead {
+    background: var(--bg-2);
+  }
+
+  th {
+    text-align: left;
+    padding: 16px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  th:first-child { padding-left: 24px; }
+
+  td {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-1);
+    vertical-align: middle;
+  }
+
+  td:first-child { padding-left: 24px; }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover { background: var(--surface); }
+
+  .td-agent {
+    font-weight: 600;
+    color: var(--text-0);
+  }
+
+  .td-mono {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-2);
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .pill-ok { background: var(--success-bg); color: var(--success); }
+  .pill-warn { background: var(--warning-bg); color: var(--warning); }
+  .pill-info { background: var(--pending-bg); color: var(--pending); }
+
+  /* === Loop Engineering section === */
+  .loop-section {
+    background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .loop-section::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -20%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(79,140,255,0.08), transparent 70%);
+    pointer-events: none;
+  }
+
+  .loop-intro {
+    font-size: 16px;
+    color: var(--text-1);
+    margin-bottom: 32px;
+    max-width: 720px;
+    line-height: 1.7;
+  }
+
+  .loop-principles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .principle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    position: relative;
+  }
+
+  .principle-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .principle h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-0);
+    margin-bottom: 8px;
+  }
+
+  .principle p {
+    font-size: 14px;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+
+  .principle .icon {
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-glow);
+    color: var(--accent);
+    font-size: 16px;
+  }
+
+  /* === Problems section === */
+  .problems-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .problem-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px 24px;
+    transition: border-color 0.3s;
+  }
+
+  .problem-item:hover { border-color: var(--border-strong); }
+
+  .problem-num {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .problem-num.critical { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .problem-num.moderate { background: var(--warning-bg); color: var(--warning); }
+  .problem-num.minor { background: var(--accent-glow); color: var(--accent); }
+
+  .problem-content h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-0);
+    margin-bottom: 4px;
+  }
+
+  .problem-content p {
+    font-size: 13px;
+    color: var(--text-2);
+  }
+
+  .problem-impact {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .impact-high { background: rgba(239,68,68,0.12); color: #ef4444; }
+  .impact-med { background: var(--warning-bg); color: var(--warning); }
+  .impact-low { background: var(--success-bg); color: var(--success); }
+
+  /* === Execution timeline === */
+  .timeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .wave {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    position: relative;
+    margin-right: -1px;
+  }
+
+  .wave-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .wave-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-0);
+    margin-bottom: 8px;
+  }
+
+  .wave-desc {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.5;
+  }
+
+  .wave-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    color: var(--text-3);
+    font-size: 20px;
+  }
+
+  /* === Footer === */
+  footer {
+    padding: 48px 0 64px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+
+  footer p {
+    font-size: 13px;
+    color: var(--text-3);
+  }
+
+  footer .sig {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 8px;
+  }
+
+  /* === Responsive === */
+  @media (max-width: 768px) {
+    .container { padding: 0 16px; }
+    header { padding: 40px 0 24px; }
+    .agents-grid { grid-template-columns: 1fr; }
+    .loop-section { padding: 24px; }
+    .timeline { flex-direction: column; }
+    .wave-arrow { display: none; }
+    .wave { margin-right: 0; margin-bottom: 8px; }
+    table { font-size: 12px; }
+    th, td { padding: 10px 12px; }
+    th:first-child, td:first-child { padding-left: 14px; }
+    .check-label { min-width: 70px; }
+  }
+
+  /* === Animations === */
+  @media (prefers-reduced-motion: no-preference) {
+    .agent-card, .stat-card, .principle, .problem-item {
+      animation: fadeUp 0.5s ease backwards;
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.2s; }
+    .stat-card:nth-child(5) { animation-delay: 0.25s; }
+    .agent-card:nth-child(1) { animation-delay: 0.1s; }
+    .agent-card:nth-child(2) { animation-delay: 0.15s; }
+    .agent-card:nth-child(3) { animation-delay: 0.2s; }
+    .agent-card:nth-child(4) { animation-delay: 0.25s; }
+    .agent-card:nth-child(5) { animation-delay: 0.3s; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ========== HEADER ========== -->
+  <header>
+    <div class="badge-top">Audit Phase 1 · Nettoyage</div>
+    <h1>Audit des Fondamentaux<br><span class="gradient">Flotte OpenClaw</span></h1>
+    <p class="subtitle">Vérification systématique des fichiers fondamentaux (MEMORY, AGENTS, HEARTBEAT) des 5 agents cœur de la flotte — nettoyage, déduplication, et validation croisée.</p>
+    <div class="header-meta">
+      <span class="meta-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        27 juin 2026
+      </span>
+      <span class="meta-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        ~15 min · Phase 1
+      </span>
+      <span class="meta-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        5 agents cœur
+      </span>
+    </div>
+  </header>
+
+  <!-- ========== STATS ========== -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value accent">15</div>
+      <div class="stat-label">Agents audités</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">8</div>
+      <div class="stat-label">Subagents parallèles</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value success">4</div>
+      <div class="stat-label">PASS checkers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value warning">1</div>
+      <div class="stat-label">En correction</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value accent">~15<span style="font-size:20px">min</span></div>
+      <div class="stat-label">Durée Phase 1</div>
+    </div>
+  </div>
+
+  <!-- ========== AGENT CARDS ========== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="num">01</span>
+      <h2>Résultats par agent</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="agents-grid">
+
+      <!-- main -->
+      <div class="agent-card pass">
+        <div class="agent-header">
+          <div>
+            <div class="agent-name">main (ClawdIA)</div>
+            <div class="agent-tag">orchestrator</div>
+          </div>
+          <div class="verdict-badge verdict-pass"><span class="dot"></span> PASS</div>
+        </div>
+        <div class="agent-checks">
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">MEMORY</span>
+            <span class="check-detail">4 blocs supprimés</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Doublons</span>
+            <span class="check-detail">Aucun</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">AGENTS</span>
+            <span class="check-detail mono">Déjà propre</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">HEARTBEAT</span>
+            <span class="check-detail">Nettoyé</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Checker</span>
+            <span class="check-detail">✅ PASS</span>
+          </div>
+        </div>
+        <div class="score-ring">
+          <svg width="52" height="52">
+            <circle class="bg-ring" cx="26" cy="26" r="22"/>
+            <circle class="progress-ring" cx="26" cy="26" r="22" stroke-dasharray="138.2" stroke-dashoffset="0"/>
+          </svg>
+          <span class="score-text">5/5</span>
+        </div>
+      </div>
+
+      <!-- executive-assistant -->
+      <div class="agent-card pass">
+        <div class="agent-header">
+          <div>
+            <div class="agent-name">executive-assistant</div>
+            <div class="agent-tag">lieutenant</div>
+          </div>
+          <div class="verdict-badge verdict-pass"><span class="dot"></span> PASS</div>
+        </div>
+        <div class="agent-checks">
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">MEMORY</span>
+            <span class="check-detail">8 blocs supprimés</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Doublons</span>
+            <span class="check-detail">@CRM + UPVD extraits</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">AGENTS</span>
+            <span class="check-detail mono">96 → 41 lignes</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">HEARTBEAT</span>
+            <span class="check-detail">Intact (9/10)</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Checker</span>
+            <span class="check-detail">✅ PASS</span>
+          </div>
+        </div>
+        <div class="score-ring">
+          <svg width="52" height="52">
+            <circle class="bg-ring" cx="26" cy="26" r="22"/>
+            <circle class="progress-ring" cx="26" cy="26" r="22" stroke-dasharray="138.2" stroke-dashoffset="0"/>
+          </svg>
+          <span class="score-text">5/5</span>
+        </div>
+      </div>
+
+      <!-- copywriter-publisher -->
+      <div class="agent-card pass">
+        <div class="agent-header">
+          <div>
+            <div class="agent-name">copywriter-publisher</div>
+            <div class="agent-tag">content · publishing</div>
+          </div>
+          <div class="verdict-badge verdict-pass"><span class="dot"></span> PASS</div>
+        </div>
+        <div class="agent-checks">
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">MEMORY</span>
+            <span class="check-detail">9 blocs supprimés</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Doublons</span>
+            <span class="check-detail">preflight + image_generate</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">AGENTS</span>
+            <span class="check-detail mono">114 → 69 lignes</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">HEARTBEAT</span>
+            <span class="check-detail">Intact (10/10)</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Checker</span>
+            <span class="check-detail">✅ PASS</span>
+          </div>
+        </div>
+        <div class="score-ring">
+          <svg width="52" height="52">
+            <circle class="bg-ring" cx="26" cy="26" r="22"/>
+            <circle class="progress-ring" cx="26" cy="26" r="22" stroke-dasharray="138.2" stroke-dashoffset="0"/>
+          </svg>
+          <span class="score-text">5/5</span>
+        </div>
+      </div>
+
+      <!-- site-maintainer -->
+      <div class="agent-card pass">
+        <div class="agent-header">
+          <div>
+            <div class="agent-name">site-maintainer</div>
+            <div class="agent-tag">devops · web</div>
+          </div>
+          <div class="verdict-badge verdict-pass"><span class="dot"></span> PASS</div>
+        </div>
+        <div class="agent-checks">
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">MEMORY</span>
+            <span class="check-detail">Promotions supprimées</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Doublons</span>
+            <span class="check-detail">Promoted Patterns extraits</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">AGENTS</span>
+            <span class="check-detail mono">248 → 79 lignes</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">HEARTBEAT</span>
+            <span class="check-detail">Intact (10/10)</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Checker</span>
+            <span class="check-detail">✅ PASS</span>
+          </div>
+        </div>
+        <div class="score-ring">
+          <svg width="52" height="52">
+            <circle class="bg-ring" cx="26" cy="26" r="22"/>
+            <circle class="progress-ring" cx="26" cy="26" r="22" stroke-dasharray="138.2" stroke-dashoffset="0"/>
+          </svg>
+          <span class="score-text">5/5</span>
+        </div>
+      </div>
+
+      <!-- crm-manager -->
+      <div class="agent-card pending">
+        <div class="agent-header">
+          <div>
+            <div class="agent-name">crm-manager</div>
+            <div class="agent-tag">CRM · contacts</div>
+          </div>
+          <div class="verdict-badge verdict-pending"><span class="dot"></span> En fix</div>
+        </div>
+        <div class="agent-checks">
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">MEMORY</span>
+            <span class="check-detail">Promotions supprimées</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">Doublons</span>
+            <span class="check-detail">Résolus</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon pending">↻</div>
+            <span class="check-label">AGENTS</span>
+            <span class="check-detail">En correction (FAIL→fix)</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok">✓</div>
+            <span class="check-label">HEARTBEAT</span>
+            <span class="check-detail">Intact</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon pending">↻</div>
+            <span class="check-label">Checker</span>
+            <span class="check-detail">🔄 En fix</span>
+          </div>
+        </div>
+        <div class="score-ring pending">
+          <svg width="52" height="52">
+            <circle class="bg-ring" cx="26" cy="26" r="22"/>
+            <circle class="progress-ring" cx="26" cy="26" r="22" stroke-dasharray="138.2" stroke-dashoffset="55.3"/>
+          </svg>
+          <span class="score-text">3/5</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========== TABLEAU ========== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="num">02</span>
+      <h2>Tableau récapitulatif</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>MEMORY.nettoyé</th>
+            <th>Doublons.résolus</th>
+            <th>AGENTS.réduit</th>
+            <th>HEARTBEAT</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-agent">main (ClawdIA)</td>
+            <td><span class="pill pill-ok">✓ 4 blocs</span></td>
+            <td><span class="pill pill-ok">✓ Aucun</span></td>
+            <td class="td-mono">— (propre)</td>
+            <td><span class="pill pill-ok">Nettoyé</span></td>
+            <td><span class="pill pill-ok">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="td-agent">executive-assistant</td>
+            <td><span class="pill pill-ok">✓ 8 blocs</span></td>
+            <td><span class="pill pill-ok">✓ @CRM + UPVD</span></td>
+            <td class="td-mono">96 → 41 lignes</td>
+            <td><span class="pill pill-ok">Intact 9/10</span></td>
+            <td><span class="pill pill-ok">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="td-agent">copywriter-publisher</td>
+            <td><span class="pill pill-ok">✓ 9 blocs</span></td>
+            <td><span class="pill pill-ok">✓ preflight + img</span></td>
+            <td class="td-mono">114 → 69 lignes</td>
+            <td><span class="pill pill-ok">Intact 10/10</span></td>
+            <td><span class="pill pill-ok">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="td-agent">site-maintainer</td>
+            <td><span class="pill pill-ok">✓ Promotions</span></td>
+            <td><span class="pill pill-ok">✓ Promoted Patterns</span></td>
+            <td class="td-mono">248 → 79 lignes</td>
+            <td><span class="pill pill-ok">Intact 10/10</span></td>
+            <td><span class="pill pill-ok">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="td-agent">crm-manager</td>
+            <td><span class="pill pill-ok">✓ Promotions</span></td>
+            <td><span class="pill pill-ok">✓ Résolus</span></td>
+            <td><span class="pill pill-warn">En correction</span></td>
+            <td><span class="pill pill-ok">Intact</span></td>
+            <td><span class="pill pill-info">🔄 En fix</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== LOOP ENGINEERING ========== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="num">03</span>
+      <h2>Méthode : Loop Engineering</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="loop-section">
+      <p class="loop-intro">
+        Chaque tâche de nettoyage est traitée comme une <strong>boucle triviale</strong> avec un engineering rigoureux autour :
+        critère d'arrêt explicite, propreté du contexte, et vérification indépendante.
+        L'agent qui nettoie (maker) n'est jamais celui qui valide (checker).
+      </p>
+
+      <div class="loop-principles">
+        <div class="principle">
+          <div class="icon">↻</div>
+          <div class="principle-num">PRINCIPE 01</div>
+          <h4>Boucle triviale, engineering autour</h4>
+          <p>La boucle de nettoyage elle-même est simple. Toute la rigueur est dans l'engineering périphérique : critères d'arrêt, propreté du contexte, vérificateur indépendant.</p>
+        </div>
+        <div class="principle">
+          <div class="icon">⚡</div>
+          <div class="principle-num">PRINCIPE 02</div>
+          <h4>Séparation maker / checker</h4>
+          <p>L'agent qui effectue le nettoyage ne valide jamais son propre travail. Un second agent indépendant vérifie avec une checklist binaire de 5 critères.</p>
+        </div>
+        <div class="principle">
+          <div class="icon">📊</div>
+          <div class="principle-num">PRINCIPE 03</div>
+          <h4>Feedback empirique</h4>
+          <p>QA binaire : 5 critères par agent. Chaque critère est PASS ou FAIL, sans nuance. Le checker fournit un feedback structuré en cas d'échec.</p>
+        </div>
+        <div class="principle">
+          <div class="icon">🔁</div>
+          <div class="principle-num">PRINCIPE 04</div>
+          <h4>Multi-run avec feedback</h4>
+          <p>Si le checker retourne FAIL, l'agent re-itère avec le feedback spécifique du checker. La boucle continue jusqu'à PASS ou jusqu'à escalade.</p>
+        </div>
+      </div>
+
+      <!-- Execution timeline -->
+      <div class="timeline" style="margin-top: 32px;">
+        <div class="wave">
+          <div class="wave-label">VAGUE 1</div>
+          <div class="wave-title">5 Makers</div>
+          <div class="wave-desc">Nettoyage en parallèle : MEMORY, AGENTS, HEARTBEAT pour chaque agent.</div>
+        </div>
+        <div class="wave-arrow">→</div>
+        <div class="wave">
+          <div class="wave-label">CHECKPOINT</div>
+          <div class="wave-title">Validation croisée</div>
+          <div class="wave-desc">Chaque sortie de maker est gelée puis confiée à un checker indépendant.</div>
+        </div>
+        <div class="wave-arrow">→</div>
+        <div class="wave">
+          <div class="wave-label">VAGUE 2</div>
+          <div class="wave-title">5 Checkers</div>
+          <div class="wave-desc">QA binaire indépendante. 4 PASS, 1 FAIL. Le FAIL déclenche un fix avec feedback.</div>
+        </div>
+        <div class="wave-arrow">→</div>
+        <div class="wave">
+          <div class="wave-label">RÉSULTAT</div>
+          <div class="wave-title">4/5 validés</div>
+          <div class="wave-desc">crm-manager en cours de fix. Les 4 autres agents sont propres et opérationnels.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PROBLÈMES SYSTÉMIQUES ========== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="num">04</span>
+      <h2>Problèmes systémiques identifiés</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="problems-grid">
+      <div class="problem-item">
+        <div class="problem-num critical">1</div>
+        <div class="problem-content">
+          <h4>MEMORY.md pollué par promotions automatiques (dreaming)</h4>
+          <p>Le dreaming accumule des blocs de promotion dans MEMORY.md, dégradant le contexte de tous les agents.</p>
+        </div>
+        <div class="problem-impact impact-high">5/5 agents</div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-num critical">2</div>
+        <div class="problem-content">
+          <h4>AGENTS.md trop longs — violation du canon "court"</h4>
+          <p>Les fichiers AGENTS.md gonflent au-delà de leur rôle de bootstrap, violant le principe de concision.</p>
+        </div>
+        <div class="problem-impact impact-high">4/5 agents</div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-num moderate">3</div>
+        <div class="problem-content">
+          <h4>HEARTBEAT.md zombies ou trop minces</h4>
+          <p>Des heartbeats obsolètes ou vides persistent. Non détecté sur les 5 cœur (déjà OK).</p>
+        </div>
+        <div class="problem-impact impact-low">0/5 cœur</div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-num critical">4</div>
+        <div class="problem-content">
+          <h4>Doublons entre fichiers</h4>
+          <p>Le même contenu apparaît dans MEMORY, AGENTS et TOOLS, créant une source de vérité ambiguë.</p>
+        </div>
+        <div class="problem-impact impact-high">4/5 agents</div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-num moderate">5</div>
+        <div class="problem-content">
+          <h4>SOUL.md trop faibles</h4>
+          <p>Identité et rôle insuffisamment définis. Non détecté sur les 5 cœur (déjà OK).</p>
+        </div>
+        <div class="problem-impact impact-low">0/5 cœur</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== FOOTER ========== -->
+  <footer>
+    <p>Audit Phase 1 · Nettoyage des fondamentaux · Flotte OpenClaw</p>
+    <p class="sig">27 juin 2026 · ClawdIA · Loop Engineering</p>
+  </footer>
+
+</div>
+
+</body>
+</html>

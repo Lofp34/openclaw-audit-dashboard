@@ -729,9 +729,42 @@
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+.fleet-nav {
+  position: fixed; top: 16px; right: 16px; z-index: 9999;
+  display: flex; gap: 8px;
+}
+.fleet-nav a {
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.3);
+  color: #a5b4fc;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+.fleet-nav a:hover {
+  background: rgba(99,102,241,0.3);
+  color: #c7d2fe;
+}
+.fleet-nav a.active {
+  background: rgba(99,102,241,0.4);
+  color: #fff;
+}
+
 </style>
 </head>
 <body>
+<div class="fleet-nav">
+  <a href="https://lofp34.github.io/openclaw-fleet-dashboard/" title="Hub central">🏠 Hub</a>
+  <a href="https://lofp34.github.io/openclaw-audit-dashboard/" class="active">📊 Audit</a>
+  <a href="https://lofp34.github.io/openclaw-phase2-cards/">🐾 Agents</a>
+  <a href="https://lofp34.github.io/openclaw-skills-cards/">🧩 Skills</a>
+</div>
 
 <div class="container">
 
